@@ -22,10 +22,9 @@ public class Customer_Test {
         customer.setCustomerName("Alawode Tolulope");
         customerService.save(customer);
         System.out.println(customer);
-
-
-
     }
+
+    
 
 
 }

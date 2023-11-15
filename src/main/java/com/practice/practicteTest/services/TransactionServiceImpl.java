@@ -4,6 +4,9 @@ import com.practice.practicteTest.TYPE;
 import com.practice.practicteTest.Utils.AppUtils;
 import com.practice.practicteTest.dtos.requests.TransferRequest;
 import com.practice.practicteTest.dtos.responses.ApiResponse;
+import com.practice.practicteTest.dtos.responses.SavedCustomerResponse;
+import com.practice.practicteTest.exceptions.AccountNotFoundException;
+import com.practice.practicteTest.exceptions.CustomerNotFoundException;
 import com.practice.practicteTest.models.Account;
 import com.practice.practicteTest.models.Customer;
 import com.practice.practicteTest.models.Transaction;
@@ -32,7 +35,8 @@ public class TransactionServiceImpl implements TransactionService{
 
 
     @Override
-    public ApiResponse<?> transfer(TransferRequest transferRequest) {
+    public ApiResponse<?> transfer(TransferRequest transferRequest) throws CustomerNotFoundException, AccountNotFoundException {
+
       BigDecimal discountIfCustomerOver4years = applyUserDurationDiscount(transferRequest);
       BigDecimal amountAfterUserDurationDiscountIsApplied = BigDecimal.valueOf(Long.parseLong(transferRequest.getAmount())).subtract(discountIfCustomerOver4years);
       BigDecimal discountedRate =  checkCustomerTypeAndApplyAppropriateDiscount(transferRequest, amountAfterUserDurationDiscountIsApplied);
@@ -44,14 +48,13 @@ public class TransactionServiceImpl implements TransactionService{
        transaction.setDiscountedAmount(discountedAmount);
        transaction.setAmount(new BigDecimal(transferRequest.getAmount()));
        transactionRepository.save(transaction);
-        return null;
+        return ApiResponse.builder().message("Transfer Successful").build();
     }
 
-    private BigDecimal applyUserDurationDiscount(TransferRequest transferRequest) {
+    private BigDecimal applyUserDurationDiscount(TransferRequest transferRequest) throws CustomerNotFoundException, AccountNotFoundException {
         int userDuration = userAccountDuration(transferRequest);
         int numberOfTransactionsInTheCurrentMonth = checkNumberOfCurrentMonthTransactions(transferRequest);
         if (userDuration > AppUtils.numberOfYearsRequiredToQualifyForDiscount && numberOfTransactionsInTheCurrentMonth <= 3) return AppUtils.discountRateForUserAbove4Years.multiply(new BigDecimal(transferRequest.getAmount()));
-
         return BigDecimal.ZERO;
     }
 
@@ -59,10 +62,10 @@ public class TransactionServiceImpl implements TransactionService{
     public List<Transaction> findAllTransactionsByAccountNumber(String accountNumber) {
        return transactionRepository.findAllByAccountNumber(accountNumber);
     }
-    private BigDecimal checkCustomerTypeAndApplyAppropriateDiscount(TransferRequest transferRequest, BigDecimal amount){
+    private BigDecimal checkCustomerTypeAndApplyAppropriateDiscount(TransferRequest transferRequest, BigDecimal amount) throws AccountNotFoundException, CustomerNotFoundException {
         Account account = accountService.findByAccountNumber(transferRequest.getSourceAccount());
         Long customerID = account.getCustomerID();
-        Customer customer = customerService.findCustomerById(customerID);
+        SavedCustomerResponse customer = customerService.findCustomerById(customerID);
         int numberOfCurrentMonthTransactions = checkNumberOfCurrentMonthTransactions(transferRequest);
 
         if (customer.getCustomerType().equals(TYPE.BUSINESS) & numberOfCurrentMonthTransactions > AppUtils.amountOfTransactionsPerMonthToQualifyForDiscount ){
@@ -96,10 +99,10 @@ public class TransactionServiceImpl implements TransactionService{
         return AppUtils.BusinessDiscountRate.multiply(amount);
     }
 
-    private int userAccountDuration(TransferRequest transferRequest){
+    private int userAccountDuration(TransferRequest transferRequest) throws AccountNotFoundException, CustomerNotFoundException {
         Account account = accountService.findByAccountNumber(transferRequest.getSourceAccount());
         Long customerID = account.getCustomerID();
-        Customer customer = customerService.findCustomerById(customerID);
+        SavedCustomerResponse customer = customerService.findCustomerById(customerID);
         LocalDate timeUserRegistered = customer.getDateCreated().toLocalDate();
         LocalDate currentTime = LocalDateTime.now().toLocalDate();
         Period periodBetweenTheYears = Period.between(timeUserRegistered, currentTime);
