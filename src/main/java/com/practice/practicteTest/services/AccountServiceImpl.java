@@ -19,15 +19,20 @@ public class AccountServiceImpl implements AccountService{
 
     private AccountRepository accountRepository;
 
+
+    /*
+    * I made the create account method return a String, a customer should get their account number now,
+    *  Although, the response body wasn't stated in the question but, it's the ideal thing regardless
+    * */
     @Override
-    public void createAccount(AccountCreationRequest accountCreationRequest) {
+    public String createAccount(AccountCreationRequest accountCreationRequest) {
         Account account = new Account();
         account.setAccountNumber(generateAccount());
         account.setCustomerID(Long.valueOf(accountCreationRequest.getCustomerId()));
         account.setDateCreated(LocalDateTime.now());
         account.setAccountBalance(new BigDecimal(accountCreationRequest.getInitialDeposit()));
-        accountRepository.save(account);
-
+        Account savedAccount = accountRepository.save(account);
+        return savedAccount.getAccountNumber();
     }
 
     @Override

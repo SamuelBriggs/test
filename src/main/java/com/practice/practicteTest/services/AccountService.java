@@ -7,7 +7,8 @@ import org.springframework.stereotype.Service;
 
 
 public interface AccountService {
-    void createAccount(AccountCreationRequest accountCreationRequest);
+
+    String createAccount(AccountCreationRequest accountCreationRequest);
 
     Account findByAccountNumber(String accountNumber) throws AccountNotFoundException;
 

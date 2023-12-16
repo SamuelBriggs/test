@@ -15,10 +15,11 @@ import java.util.List;
 @ToString
 public class SaveCustomerRequest {
 
-    private Long customerID;
+//    private Long customerID;
     private String customerName;
     private TYPE customerType;
     private String initialDeposit;
+    private String phoneNumberOrEmailAddress;
 
 
 }

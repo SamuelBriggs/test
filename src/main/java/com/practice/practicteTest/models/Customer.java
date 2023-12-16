@@ -18,6 +18,8 @@ public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long customerID;
+    private String phoneNumber;
+    private String emailAddress;
     private String customerName;
     private TYPE customerType;
     @OneToMany(mappedBy = "customerID", cascade = CascadeType.ALL)
